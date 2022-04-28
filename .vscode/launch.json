@@ -1,0 +1,24 @@
+{
+  // Use IntelliSenseto learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+      {
+          "name": "Python: Current File",
+          "type": "python",
+          "request": "launch",
+          "envFile": "~/usr/bin/env",
+          "env": {
+            "DISPLAY":":0.0",
+            "PIGPIO_ADDR":"192.168.1.10",
+            "PIGPIO_PORT":"8888"
+          },
+          "prelaunchTask": "debug",        
+          "program": "${workspaceFolder}/main.py",
+          "justMyCode": true,
+          "subProcess": true,
+          "autoReload": {}
+      }
+  ]
+}
