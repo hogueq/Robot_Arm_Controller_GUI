@@ -485,8 +485,10 @@ def playBackMotion(
         if gripper_state != temp_gripper_state:
             if gripper_state:
                 gripActivate()
+                status[2].set(True)
             if not gripper_state:
                 gripDeactivate()
+                status[2].set(False)
             temp_gripper_state = status[2].get()
         axisControl(axis_num, position)
         while current_positions[axis_num - 1].get() != position[axis_num - 1].get():
