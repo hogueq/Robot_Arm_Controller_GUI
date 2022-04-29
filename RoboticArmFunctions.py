@@ -651,9 +651,9 @@ def findImportantControlPoints(commands: "list[dict]"):
         if gripper_state_list[i] != gripper_state_list[i + 1] and i < n-1:
             commands.append(
                 {
-                    "AxisNum": temp_axis_num_list[i+1],
-                    "Position": temp_position_list[i+1],
-                    "Gripper State": gripper_state_list[i+1],
+                    "AxisNum": temp_axis_num_list[i],
+                    "Position": temp_position_list[i],
+                    "Gripper State": gripper_state_list[i],
                 }
             )
                 
