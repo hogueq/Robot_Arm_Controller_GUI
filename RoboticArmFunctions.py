@@ -592,14 +592,14 @@ def findImportantControlPoints(commands: "list[dict]"):
                     }
                 )
                 i+=2
-        elif gripper_state_list[i] != gripper_state_list[i + 1] and i < n:
-            commands.append(
-                {
-                    "AxisNum": temp_axis_num_list[i],
-                    "Position": temp_position_list[i],
-                    "Gripper State": gripper_state_list[i],
-                }
-            )
+        # elif gripper_state_list[i] != gripper_state_list[i + 1] and i < n:
+        #     commands.append(
+        #         {
+        #             "AxisNum": temp_axis_num_list[i],
+        #             "Position": temp_position_list[i],
+        #             "Gripper State": gripper_state_list[i],
+        #         }
+        #     )
         elif i == 0:
             if temp_position_list[0] != temp_position_list[1]:
                 commands.append(
@@ -638,15 +638,22 @@ def findImportantControlPoints(commands: "list[dict]"):
                         "Gripper State": gripper_state_list[i],
                     }
                 )
-        else:
-            if temp_position_list[n - 1] != temp_position_list[n]:
-                commands.append(
-                    {
-                        "AxisNum": temp_axis_num_list[i + 1],
-                        "Position": temp_position_list[i + 1],
-                        "Gripper State": gripper_state_list[i + 1],
-                    }
-                )
+        elif temp_position_list[n - 1] != temp_position_list[n]:
+            commands.append(
+                {
+                    "AxisNum": temp_axis_num_list[i + 1],
+                    "Position": temp_position_list[i + 1],
+                    "Gripper State": gripper_state_list[i + 1],
+                }
+            )
+        if gripper_state_list[i] != gripper_state_list[i + 1] and i < n-1:
+            commands.append(
+                {
+                    "AxisNum": temp_axis_num_list[i+1],
+                    "Position": temp_position_list[i+1],
+                    "Gripper State": gripper_state_list[i+1],
+                }
+            )
                 
 staticmethod
 def keepActiveWhileMoving(axisNum):
