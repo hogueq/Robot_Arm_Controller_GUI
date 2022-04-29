@@ -61,7 +61,7 @@ def continuousCtrlLoop(
     current_positions: "list[DoubleVar]",
     new_positions: "list[DoubleVar]",
     status: "list[BooleanVar]",
-    stop_text: "list[BooleanVar]",
+    program_controls_text: "list[StringVar]",
     out_file=None,
 ):
     """Used for the continuous control of the axis.
@@ -128,9 +128,11 @@ def continuousCtrlLoop(
                 # if the controller kill switch is true or the e-stop status from the GUI is true
                 if controllers[i].get_kill_switch_status() == True or status[5].get():
                     kill_switch = True # set killswitch variable to true
+                    status[4].set(False) #set the run state to false 
+                    program_controls_text[1].set("Run") # change the text back to run
                     if  not status[5].get(): # if the estop was not set on the screen 
                         status[5].set(True) # set the estop to true and change text to reset estop
-                        stop_text[0].set("Reset E-Stop")
+                        program_controls_text[0].set("Reset E-Stop")
                         
                     else:
                         # command all controller to halt and hold
@@ -173,10 +175,10 @@ def continuousCtrlLoop(
         if messagebox.askretrycancel(
             title="Attention!!", message="Kill Switch Pressed, Motion Stopped"
         ):  
-            stop_text[0].set("E-Stop") # resets the text for the estop
+            program_controls_text[0].set("E-Stop") # resets the text for the estop
             status[5].set(False) #put the estop back to false
             # call itself to start the loop again
-            continuousCtrlLoop(current_positions, new_positions, status, stop_text, out_file)
+            continuousCtrlLoop(current_positions, new_positions, status, program_controls_text, out_file)
             if out_file != None and not out_file.closed:
                 json.dump(data, out_file)
                 out_file.close()
@@ -193,6 +195,7 @@ def continuousCtrlLoop(
                 + "and use a combination of moving the axis using by setting the "
                 + "position and pressing the move arm button. ",
             )
+    # make sure if there is an out file it gets written out. 
     if out_file != None and not out_file.closed:
         json.dump(data, out_file)
         out_file.close()
@@ -205,7 +208,7 @@ def ctrlLoop(
     current_positions: "list[DoubleVar]",
     new_positions: "list[DoubleVar]",
     status: "list[BooleanVar]",
-    stop_text: "list[StringVar]"):
+    program_controls_text: "list[StringVar]"):
     """Used to send commands to each individual axis
 
     Args:
@@ -228,36 +231,44 @@ def ctrlLoop(
                 execution_time = t2 - t1
                 updateCurVal(current_positions)
                 keepActiveWhileMoving(i)
+                # try get the status of the kill switch if it fails the a message 
+                # will print out letting user know there is something wrong
                 try:
+                    # if the controller kill switch is true or the e-stop status from the GUI is true
                     if controllers[i].get_kill_switch_status() == True or status[5].get():
                         kill_switch = True
-                        if  not status[5].get():
-                            status[5].set(True)
-                            stop_text[0].set("Reset E-Stop")
-                        else:   
+                        if  not status[5].get(): # if the estop was not set on the screen 
+                            status[5].set(True) # set the estop to true and change text to reset estop
+                            program_controls_text[0].set("Reset E-Stop")
+                        else:
+                            # command all controller to halt and hold
                             controllers[0].halt_and_hold()
                             controllers[1].halt_and_hold()
                             controllers[2].halt_and_hold()
                             controllers[3].halt_and_hold()
-                            controllers[4].halt_and_hold()
-                            
+                            controllers[4].halt_and_hold()   
+                            # command all controller to enter safe start
                             controllers[0].enter_safe_start()
                             controllers[1].enter_safe_start()
                             controllers[2].enter_safe_start()
                             controllers[3].enter_safe_start()
                             controllers[4].enter_safe_start()
                         break
-                except:
+                except: # the pi failed to communitcate to the the controller while in the control loop
                     msg = str(
-                        "Error: Controller responding. Could not get_kill_switch_status(), please check controller.\nThen attemp to press move arm again"
+                        "Error: Controller responding. Could not get_kill_switch_status(), "+
+                        "please check controller.\nThen attemp to press move arm again"
                     )
-                    messagebox.showwarning(title="Attention!!", message=msg)
+                    messagebox.showwarning(title="Attention!!", message=msg)# error message popup on screen
                     return
+                # if the axis has reached the new position then exit loop
                 if new_positions[i-1].get() == current_positions[i-1].get():
                     break
+                # if the axis is not responding continue
                 elif execution_time > 15.0:
                     break
-            time.sleep(1)
+            time.sleep(1) # wait 1 second
+            #break out of outer loop if the killswitch is pressed
             if kill_switch:
                 break
 
@@ -266,27 +277,27 @@ def ctrlLoop(
             if messagebox.askretrycancel(
                 title="Attention", message="Kill Switch Pressed, Motion Stopped! GUI Reset must be pressed"
             ):
-                stop_text[0].set("E-Stop") # resets the text for the estop
+                program_controls_text[0].set("E-Stop") # resets the text for the estop
                 status[5].set(False) #put the estop back to false
-                ctrlLoop(current_positions, new_positions, status, stop_text)
+                ctrlLoop(current_positions, new_positions, status, program_controls_text)
                 return
             else:
+                # pop up an info message about how to reset the position of the robotic arm. 
                 messagebox.showinfo(
                     "Attention!",
-                    "E-Stop pressed on GUI, All moition stopped. "
+                    "E-Stop pressed on GUI, All motion stopped. "
                     + "Please attempt to reset position of arm "
                     + "by manually moving axis slowly while powered down "
                     + "and resetting the pi and controllers. "
-                    + "OR Another opition is to reset the e-stop to regain control "
+                    + "OR Another option is to reset the e-stop to regain control "
                     + "and use a combination of moving the axis using by setting the "
                     + "position and pressing the move arm button. ",
                 )
                 return
 
-
 staticmethod
 def updateCurVal(cur_val_vars: "list[DoubleVar]"):
-    """Used to pull the current posistion values frome the stepper controllers
+    """Used to pull the current position values from the stepper controllers
     it has to multiple the value by 0.018 degrees to get the value the will be displayed
 
     Args:
@@ -314,104 +325,107 @@ def updateCurVal(cur_val_vars: "list[DoubleVar]"):
     try:
         cur_val_vars[3].set(
             round(tic_axis4_1.get_current_position() * 0.05625, 1)
-        )  # 0.05625 degrees/step (controller set for 1/32step mode)
+        )  # 0.05625 degrees/step (4 axis controller is set set for 1/32step mode)
     except:
         print("Error: axis 4 not responding, check controller!")
 
 
+# TODO: add in safer control code by adding limit check conditions
+# should not be necessary, but I will include this recommendation anyway
 staticmethod
-def axisControl(axisNum, newPosition):
+def axisControl(axis_num: int, new_position: "list(DoubleVar)"):
     """Used to set new target positions for each axis
-
+    
     Args:
-        axisNum (integer): used to select the desired axis
-        newPosition (List[stringvars]): used to pass the new position text from the GUI to the controller
+        axis_num (int): used to select the desired axis
+        new_position (list(DoubleVar)): used to pass the new position text from the GUI to the controller
     """
     global controllers
-    target_1 = int(newPosition[axisNum - 1].get() / 0.018)
-    if axisNum == 1:
+    target_1 = int(new_position[axis_num - 1].get() / 0.018) #set target value based off of the value of 
+    if axis_num == 1:
         try:
-            controllers[axisNum - 1].set_target_position(target_1)
-            controllers[axisNum - 1].exit_safe_start()
+            controllers[axis_num - 1].set_target_position(target_1) # sets the target position
+            controllers[axis_num - 1].exit_safe_start() # tells the controller to exit safe start
         except:
-            print("Error: axis", axisNum, " not responding, please check controller")
-        # print("axis", axisNum, " target:", target_1)
-    elif axisNum == 2:
+            print("Error: axis", axis_num, " not responding, please check controller")
+        # print("axis", axisNum, " target:", target_1)  #uncomment to have the targets print in the console when running from console
+    elif axis_num == 2:
         target_2 = -target_1
         try:
-            controllers[axisNum].set_target_position(target_2)
-            controllers[axisNum - 1].set_target_position(target_1)
-            controllers[axisNum].exit_safe_start()
-            controllers[axisNum - 1].exit_safe_start()
+            controllers[axis_num].set_target_position(target_2) # sets the target position
+            controllers[axis_num - 1].set_target_position(target_1) # sets the target position it is the inverse of the other motor
+            controllers[axis_num].exit_safe_start()# tells the controller to exit safe start
+            controllers[axis_num - 1].exit_safe_start()# tells the controller to exit safe start
         except:
-            print("Error: axis", axisNum, " not responding, please check controller")
-        # print("axis", axisNum, " target:", target_2)
+            print("Error: axis", axis_num, " not responding, please check controller")
+        # print("axis", axisNum, " target:", target_1) #uncomment to have the targets print in the console when running from console
     else:
         if (
-            axisNum == 4
+            axis_num == 4
         ):  # used to fixed the number before it is sent to the controller for the forth axis
             target_1 = int(target_1 / 3.125)
-        # print("axis", axisNum, " target:", target_1)
+        # print("axis", axisNum, " target:", target_1) #uncomment to have the targets print in the console when running from console
         try:
-            controllers[axisNum].set_target_position(target_1)
-            controllers[axisNum].exit_safe_start()
+            controllers[axis_num].set_target_position(target_1)# sets the target position
+            controllers[axis_num].exit_safe_start()# tells the controller to exit safe start
         except:
-            print("Error: axis", axisNum, " not responding, please check controller")
+            print("Error: axis", axis_num, " not responding, please check controller")
 
 
 staticmethod
 def gripActivate():
     """Function closes the gripper"""
-    gripper.min()
-    time.sleep(1.0)
+    gripper.min() 
+    time.sleep(1.0) # wait 1 second 
 
 
 staticmethod
 def gripDeactivate():
     """Function opens the grippers"""
     gripper.max()
-    time.sleep(1.0)
+    time.sleep(1.0) # wait 1 second
 
 
 staticmethod
 def set_current_position(axis_num, current_position, axis_setval_list, axis_curval_list):
-    """Used to set new current position (Zero the position of the specified axis)
+    """Used to set new current position (Zero the position of the specified axis) 
+        can be used to set other values for position values. Only used to zero axis in this code.
     Args:
         axisNum (interger): used to select the desired axis
         currentPosition (interger): used to pass the new current position from the GUI to the controller
     """
-    global controllers
-    target_1 = int(current_position / 0.018)
+    global controllers # allows axis to the modules global var controllers
+    target_1 = int(current_position / 0.018) # sets the target position that the controller will be set when it halts
     if axis_num == 1:
         try:
-            controllers[axis_num - 1].set_current_position(target_1)
+            controllers[axis_num - 1].set_current_position(target_1) # sets the target position zero
         except:
-            print("Error: axis", axis_num, " not responding, please check controller")
+            print("Error: axis", axis_num, " not responding, please check controller") #print error message if controller is not responding
             return
-        axis_setval_list[axis_num - 1].set("0.0")
-        print("axis", axis_num, " target1:", target_1)
+        axis_setval_list[axis_num - 1].set("0.0") # sets the position zero
+         # print("axis", axisNum, " target:", target_1) #uncomment to have the targets print in the console when running from console
     elif axis_num == 2:
         target_2 = -target_1
         try:
-            controllers[axis_num].set_current_position(target_2)
-            controllers[axis_num - 1].set_current_position(target_1)
+            controllers[axis_num].set_current_position(target_2) # sets the target position zero
+            controllers[axis_num - 1].set_current_position(target_1) # sets the target position zero
         except:
-            print("Error: axis", axis_num, " not responding, please check controller")
+            print("Error: axis", axis_num, " not responding, please check controller") #print error message if controller is not responding
             return
-        axis_setval_list[axis_num - 1].set("0.0")
-        print("axis", axis_num, " target2:", target_2)
+        axis_setval_list[axis_num - 1].set("0.0") # sets the position zero
+        # print("axis", axisNum, " target:", target_1) #uncomment to have the targets print in the console when running from console
     else:
         try:
             if (
                 axis_num == 4
             ):  # used to fixed the number before it is sent to the controller for the forth axis
                 target_1 = int(target_1 / 3.125)
-            controllers[axis_num].set_current_position(target_1)
+            controllers[axis_num].set_current_position(target_1)# sets the target position zero
         except:
-            print("Error: axis", axis_num, " not responding, please check controller")
+            print("Error: axis", axis_num, " not responding, please check controller") #print error message if controller is not responding
             return
-        axis_setval_list[axis_num - 1].set("0.0")
-        print("axis", axis_num, " target1:", target_1)
+        axis_setval_list[axis_num - 1].set("0.0")# sets the position zero
+        # print("axis", axisNum, " target:", target_1) #uncomment to have the targets print in the console when running from console
     updateCurVal(
         axis_curval_list
     )  # call the function to update the current values on the display
@@ -422,7 +436,7 @@ def playBackMotion(
     current_positions: "list[DoubleVar]",
     step_speed, 
     status: "list[BooleanVar]", 
-    stop_text: "list[BooleanVar]"
+    program_controls_text: "list[StringVar]"
 ):
     """_summary_
 
@@ -432,7 +446,7 @@ def playBackMotion(
         status (list[BooleanVar]): _description_
         stop_text (list[BooleanVar]): _description_
     """
-    commands: "list[dict]" #declare the type hint for the commands varible 
+    commands: "list[dict]" #declare the type hint for the commands variable 
     position = [
         DoubleVar(),
         DoubleVar(),
@@ -459,7 +473,7 @@ def playBackMotion(
     
     # used to find the local min and local max, when axis num changes, 
     # or when gripper state changes. 
-    # Note: Gripper recording the gripper state has some issues
+    # Note: recording the gripper state may have some issues
     findImportantControlPoints(commands)  
     for i in range(0, len(commands)):
         while not status[4].get():
@@ -479,9 +493,11 @@ def playBackMotion(
             keepActiveWhileMoving(axis_num)
             if (controllers[axis_num - 1].get_kill_switch_status()
                 or status[5].get() or not status[3].get()):
+                    status[4].set(False)
+                    program_controls_text[1].set("Run")
                     if  not status[5].get():
                         status[5].set(True)
-                        stop_text[0].set("Reset E-Stop")
+                        program_controls_text[0].set("Reset E-Stop")
                     else:
                         # tell all motors to halt and hold position
                         controllers[0].halt_and_hold()
@@ -498,18 +514,18 @@ def playBackMotion(
                         controllers[4].enter_safe_start()
                     messagebox.showinfo(
                         "Attention!",
-                        "E-Stop pressed on GUI, All moition stopped. "
+                        "E-Stop pressed on GUI, All motion stopped. "
                         + "Please attempt to reset position of arm "
                         + "by manually moving axis slowly while powered down "
                         + "and resetting the pi and controllers. "
-                        + "OR Another opition is to reset the e-stop to regain control "
+                        + "OR Another option is to reset the e-stop to regain control "
                         + "and use a combination of moving the axis using by setting the "
                         + "position and pressing the move arm button. ",
                     )
                     return
             if not status[4].get():
                 break
-        # if an estop is pressed or the user unclicks the 
+        # if an estop is pressed or the user uncheck the 
         if (
             controllers[axis_num - 1].get_kill_switch_status()
             or status[5].get()
@@ -517,7 +533,7 @@ def playBackMotion(
         ):
             if  not status[5].get():
                 status[5].set(True)
-                stop_text[0].set("Reset E-Stop")
+                program_controls_text[0].set("Reset E-Stop")
             else:
                 # tell all motors to halt and hold position
                 controllers[0].halt_and_hold()
@@ -526,7 +542,7 @@ def playBackMotion(
                 controllers[3].halt_and_hold()
                 controllers[4].halt_and_hold()
                         
-                # tell all motors to enter safe start so they dont heat up too much 
+                # tell all motors to enter safe start so they don't heat up too much 
                 controllers[0].enter_safe_start()
                 controllers[1].enter_safe_start()
                 controllers[2].enter_safe_start()
@@ -534,20 +550,19 @@ def playBackMotion(
                 controllers[4].enter_safe_start()
             messagebox.showinfo(
                 "Attention!",
-                "E-Stop pressed on GUI, All moition stopped. "
+                "E-Stop pressed on GUI, All motion stopped. "
                 + "Please attempt to reset position of arm "
                 + "by manually moving axis slowly while powered down "
                 + "and resetting the pi and controllers. "
-                + "OR Another opition is to reset the e-stop to regain control "
+                + "OR Another option is to reset the e-stop to regain control "
                 + "and use a combination of moving the axis using by setting the "
                 + "position and pressing the move arm button. ",
             )
             return
         time.sleep(step_speed)
 
-
+staticmethod
 def findImportantControlPoints(commands: "list[dict]"):
-    newCommmands = commands.copy
     temp_axis_num_list = list()
     temp_position_list = list()
     gripper_state_list = list()
@@ -642,6 +657,8 @@ def findImportantControlPoints(commands: "list[dict]"):
                         "Gripper State": gripper_state_list[i + 1],
                     }
                 )
+                
+staticmethod
 def keepActiveWhileMoving(axisNum):
     """Used to keep controllers awake while they are moving. 
 
