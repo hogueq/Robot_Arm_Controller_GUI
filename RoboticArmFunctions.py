@@ -24,7 +24,8 @@ axis1_1_address, axis2_1_address, axis2_2_address, axis3_1_address, axis4_1_addr
     18,
 )
 
-# create an instance of the TicI2C for each of the axis motor controllers
+# create an instance of the TicI2C for each of the axis motor controllers 
+# Note: Could be done with a for loop
 tic_axis1_1 = TicI2C(StepperControllerFunctions.bus, axis1_1_address)
 tic_axis2_1 = TicI2C(StepperControllerFunctions.bus, axis2_1_address)
 tic_axis2_2 = TicI2C(StepperControllerFunctions.bus, axis2_2_address)
@@ -32,13 +33,15 @@ tic_axis3_1 = TicI2C(StepperControllerFunctions.bus, axis3_1_address)
 tic_axis4_1 = TicI2C(StepperControllerFunctions.bus, axis4_1_address)
 
 # Set up the Servo Used for the Gripper
-factory = PiGPIOFactory(host="localhost")
+factory = PiGPIOFactory(host="localhost") 
+''' Uses the pigpio_ library to interface to the Pi's GPIO pins. 
+    This is done over a network socket which is why a host is required'''
 gripper = Servo(
-    12,
-    pin_factory=factory,
-    min_pulse_width=0.45 / 1000,
-    max_pulse_width=(0.5 + 0.6) / 1000,
-    frame_width=20 / 1000,
+    12, # the pin number that the pwm signal will be output through
+    pin_factory=factory, # sets the pin factory
+    min_pulse_width=0.45 / 1000, # sets the open position for the gripper 
+    max_pulse_width=1.1 / 1000, # sets the closed position for the gripper
+    frame_width=20 / 1000, # the carrier frequency of the pwm signal 
 )
 """min_pulse_width sets the close postion, max_pulse_width sets the open position - For Gripper Servo"""
 
@@ -46,21 +49,22 @@ controllers = [tic_axis1_1, tic_axis2_1, tic_axis2_2, tic_axis3_1, tic_axis4_1]
 """Axis1,Axis2_1,Axis2_2,Axis3,Axis4"""
 
 # section not complete
-# TODO: Will not be implemented by Team 7 Class of 2022, but may be used by future students
+# Will not be implemented by Team 7 Class of 2022, but may be used by futurestudents
+# It will require feedback or limitswitches for this to be implimented
 def homeArm():
     """Will be used for the section of code the preforms the homing of the robotic arm."""
     pass
 
 
 staticmethod
-def continousCtrlLoop(
+def continuousCtrlLoop(
     current_positions: "list[DoubleVar]",
     new_positions: "list[DoubleVar]",
     status: "list[BooleanVar]",
     stop_text: "list[BooleanVar]",
     out_file=None,
 ):
-    """Used for the continous control of the axis.
+    """Used for the continuous control of the axis.
 
     Args:
         current_positions (list[StringVars]): Contains the Current Positions In Mutable Form
@@ -69,10 +73,9 @@ def continousCtrlLoop(
     """
     global controllers
     kill_switch = False
-    status[5].set(False)
     temp_position = [0.0, 0.0, 0.0, 0.0]
     temp_gripper_state = status[2].get()
-    data = list() # will be used to append dictionarys containing values to create the final json file
+    data = list() # will be used to append dictionary's containing values to create the final json file
     # While the check box for Live Motion Is Checked
     while status[0].get(): 
         if not status[4].get(): # Waits for the RUN button to be pressed, if it gets pressed again it will pause the live actions
@@ -93,7 +96,7 @@ def continousCtrlLoop(
                 status[1].set(False) # reset check box for record back to false. 
         # loop for incrementing through the 4 different axis inputs. counts from 1 - 4
         for i in range(1, 5):
-            # if run is not enabled break out of loop inorder to get back to idle pause loop. 
+            # if run is not enabled break out of loop in order to get back to idle pause loop. 
             if not status[4].get():
                 break
             # if new position does not equal current position or current state of gripper does not match the temp state: 
@@ -113,61 +116,80 @@ def continousCtrlLoop(
                         "Gripper State": status[2].get(),
                         }
                     )
-                    # sets temp_poition to the new position that was just sent to the controllers
+                    # sets temp_position to the new position that was just sent to the controllers
                     temp_position[i - 1] = new_positions[i - 1].get()  
-                # sets temp grip to new position 
-                temp_gripper_state = status[2].get()
-            updateCurVal(current_positions)
+                    # sets temp grip to new state
+                    temp_gripper_state = status[2].get()
+            updateCurVal(current_positions) # call the function to update the current position of the arm
             
+            # try get the status of the kill switch if it fails the a message 
+            # will print out letting user know there is something wrong
             try:
+                # if the controller kill switch is true or the e-stop status from the GUI is true
                 if controllers[i].get_kill_switch_status() == True or status[5].get():
-                    kill_switch = True
-                    if  not status[5].get():
-                        status[5].set(True)
+                    kill_switch = True # set killswitch variable to true
+                    if  not status[5].get(): # if the estop was not set on the screen 
+                        status[5].set(True) # set the estop to true and change text to reset estop
                         stop_text[0].set("Reset E-Stop")
-                    else:      
+                        
+                    else:
+                        # command all controller to halt and hold
+                        controllers[0].halt_and_hold()
+                        controllers[1].halt_and_hold()
+                        controllers[2].halt_and_hold()
+                        controllers[3].halt_and_hold()
+                        controllers[4].halt_and_hold()   
+                        # command all controller to enter safe start
                         controllers[0].enter_safe_start()
                         controllers[1].enter_safe_start()
                         controllers[2].enter_safe_start()
                         controllers[3].enter_safe_start()
                         controllers[4].enter_safe_start()
-                    break
-            except:
+                    break # break out of loop
+            except: # the pi failed to communitcate to the the controller while in the control loop
                 msg = str(
-                    "Error: Not responding. Could not get_kill_switch_status(), please check controller.\nThen restart Live Axis Control"
+                    "Error: Not responding. Could not get_kill_switch_status(),"+
+                    " please check controller.\nThen restart Live Axis Control"
                 )
-                messagebox.showwarning(title="Attention!!", message=msg)
-                if not status[1].get() and out_file != None and not out_file.closed:
-                    json.dump(data, out_file)
-                    out_file.close()
+                messagebox.showwarning(title="Attention!!", message=msg) # error message popup on screen
+                # if record is enabled and outfile is not none and not closed:
+                # then write data to the json file and close. 
+                if not status[1].get() and out_file != None and not out_file.closed:  
+                    json.dump(data, out_file) 
+                    out_file.close() # close the file to ensure the data gets written
                 return
-            # time.sleep(0.5)
+            
+            # if record is enabled and outfile is not none and not closed:
+            # then write data to the json file and close it used if the state switches while in the loop
             if not status[1].get() and out_file != None and not out_file.closed:
                 json.dump(data, out_file)
                 out_file.close()
-
+        #breaks out of outter loop if killswitch is true
         if kill_switch:
             break
         
-
+    #prompts user to continue the what they were doing. 
     if kill_switch:
         if messagebox.askretrycancel(
             title="Attention!!", message="Kill Switch Pressed, Motion Stopped"
         ):  
-            stop_text[0].set("E-Stop")
-            continousCtrlLoop(current_positions, new_positions, status, stop_text, out_file)
+            stop_text[0].set("E-Stop") # resets the text for the estop
+            status[5].set(False) #put the estop back to false
+            # call itself to start the loop again
+            continuousCtrlLoop(current_positions, new_positions, status, stop_text, out_file)
             if out_file != None and not out_file.closed:
                 json.dump(data, out_file)
                 out_file.close()
             return
         else:
+            # pop up an info message about how to reset the position of the robotic arm. 
             messagebox.showinfo(
                 "Attention!",
-                "E-Stop pressed on GUI, All moition stopped. "
+                "E-Stop pressed on GUI, All motion stopped. "
                 + "Please attempt to reset position of arm "
                 + "by manually moving axis slowly while powered down "
                 + "and resetting the pi and controllers. "
-                + "OR Another opition is to reset the e-stop to regain control "
+                + "OR Another option is to reset the e-stop to regain control "
                 + "and use a combination of moving the axis using by setting the "
                 + "position and pressing the move arm button. ",
             )
@@ -184,7 +206,7 @@ def ctrlLoop(
     new_positions: "list[DoubleVar]",
     status: "list[BooleanVar]",
     stop_text: "list[StringVar]"):
-    """Used to send commands to each indivual axis
+    """Used to send commands to each individual axis
 
     Args:
         current_positions (list[StringVars]): Contains the Current Positions In Mutable Form
@@ -244,7 +266,8 @@ def ctrlLoop(
             if messagebox.askretrycancel(
                 title="Attention", message="Kill Switch Pressed, Motion Stopped! GUI Reset must be pressed"
             ):
-                stop_text[0].set("E-Stop")
+                stop_text[0].set("E-Stop") # resets the text for the estop
+                status[5].set(False) #put the estop back to false
                 ctrlLoop(current_positions, new_positions, status, stop_text)
                 return
             else:
