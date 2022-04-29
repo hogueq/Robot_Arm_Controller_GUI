@@ -83,7 +83,7 @@ def continousCtrlLoop(
                 title="Select a File to Be Written or Enter New File Name",
                 confirmoverwrite=True,
                 defaultextension="*.json",
-                initialdir="/home/pi/Desktop/RecordedPaths",
+                initialdir="./RecordedPaths",
                 filetypes=[("Json file", "*.json")],
                 initialfile="*.json",
             )
@@ -422,9 +422,10 @@ def playBackMotion(
         title="Select file to be played back",
         mode="r",
         defaultextension="*.json",
-        initialdir="/home/pi/Desktop/RecordedPaths",
+        initialdir="./RecordedPaths",
         filetypes=[("Json file", "*.json")],
     )
+    
     try:
         commands = json.load(in_file)
     except:
@@ -432,9 +433,11 @@ def playBackMotion(
         print("Error: could not load json file")
         return
     in_file.close  # after file load it can be closed
-    findImportantControlPoints(
-        commands
-    )  # used to find the local min and local max, when axis num changes, or when gripper state changes.
+    
+    # used to find the local min and local max, when axis num changes, 
+    # or when gripper state changes. 
+    # Note: Gripper recording the gripper state has some issues
+    findImportantControlPoints(commands)  
     for i in range(0, len(commands)):
         while not status[4].get():
             continue
