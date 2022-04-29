@@ -475,6 +475,7 @@ def playBackMotion(
     # or when gripper state changes. 
     # Note: recording the gripper state may have some issues
     findImportantControlPoints(commands)  
+    temp_gripper_state = status[2].get()
     for i in range(0, len(commands)):
         while not status[4].get(): # stays in loop while paused 
             continue
@@ -486,7 +487,7 @@ def playBackMotion(
                 gripActivate()
             if not gripper_state:
                 gripDeactivate()
-        temp_gripper_state = status[2].get()
+            temp_gripper_state = status[2].get()
         axisControl(axis_num, position)
         while current_positions[axis_num - 1].get() != position[axis_num - 1].get():
             updateCurVal(current_positions)
@@ -591,15 +592,6 @@ def findImportantControlPoints(commands: "list[dict]"):
                     }
                 )
                 i+=2
-            ## INFO: Commenting this out improved play back function.     
-            # commands.append(
-            #     {
-            #         "AxisNum": temp_axis_num_list[i + 1],
-            #         "Position": temp_position_list[i + 1],
-            #         "Gripper State": gripper_state_list[i + 1],
-            #     }
-            # )
-            # i += 1
         elif gripper_state_list[i] != gripper_state_list[i + 1] and i < n:
             commands.append(
                 {
