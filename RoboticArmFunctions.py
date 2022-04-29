@@ -1,17 +1,13 @@
 #
 # File: RoboticArmFunctions.py
-# Date: 04/19/2022
+# Date: 04/28/2022
 # Author: Quinn Hogue
-# Contact Info: quinnhogue24@gmail.com
 # Purpose: Functions and Control Logic For Robotic Arm
 #
 
 # imports
-from asyncore import loop
 import json
 import time
-from turtle import position
-from typing import List
 import StepperControllerFunctions
 from StepperControllerFunctions import TicI2C
 from gpiozero import Servo

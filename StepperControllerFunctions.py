@@ -1,14 +1,13 @@
 #
 # File: StepperControllerFunction.py
-# Date: 04/19/2022
+# Date: 04/28/2022
 # Author: Quinn Hogue
-# Contact Info: quinnhogue24@gmail.com
 # Purpose: Contain the source code for the I2C communication used with the 
-#   Polulo TIC 249's used to control the stepper motor. These are the basic functions 
-#   That I used for the contorll more info can be found at https://www.pololu.com/docs/0J71/12.9 
-#   is the link for the base code that I used to get started. The User guide is found at: 
-#   https://www.pololu.com/docs/0J71. For future groups I recommend looking at a lib that another 
-#   user created for the that has a more complete library. It is found at: https://github.com/jphalip/ticlib
+# Polulo TIC 249's used to control the stepper motor. These are the basic functions 
+# That I used for the contorll more info can be found at https://www.pololu.com/docs/0J71/12.9 
+# is the link for the base code that I used to get started. The User guide is found at: 
+# https://www.pololu.com/docs/0J71. For future groups I recommend looking at a lib that another 
+# user created for the that has a more complete library. It is found at: https://github.com/jphalip/ticlib
 #
 
 # Uses the smbus2 library to send and receive data from a Tic.

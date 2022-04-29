@@ -1,16 +1,14 @@
 #
 # File: app.py
-# Date: 04/19/2022
+# Date: 04/28/2022
 # Author: Quinn Hogue
-# Contact Info: quinnhogue24@gmail.com
-# You can reach out with me for help at this email at any time and I will try to get back to you.
 # Purpose: Creates and controls the GUI for the robotic arm control.
-#
+# Contacting: If you are an Etown student please talk to the one of the Engineering Faculty. 
+# They most likey can get you my contact information. 
 
-
+# Imports
 from threading import Thread
 import json
-import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Union
