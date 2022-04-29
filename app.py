@@ -4,7 +4,7 @@
 # Author: Quinn Hogue
 # Purpose: Creates and controls the GUI for the robotic arm control.
 # Contacting: If you are an Etown student please talk to the one of the Engineering Faculty. 
-# They most likey can get you my contact information. 
+# They most likely can get you my contact information. 
 
 # Imports
 from threading import Thread
@@ -114,7 +114,7 @@ class LiveAxisControl(Thread):
         self.stop_text = stop_text
 
     def run(self):
-        RoboticArmFunctions.continousCtrlLoop(
+        RoboticArmFunctions.continuousCtrlLoop(
             self.axis_curval_list, self.axis_setval_list, self.status, self.stop_text
         )
         
@@ -172,7 +172,7 @@ class Window(tk.Tk):
             self.destroy()
 
     # Switch which frame is currently active in the window
-    def switch_frame(self, frame_class):
+    def switch_frame(self, frame_class: ttk.Frame):
         """Destroys current frame and replaces it with a new one."""
         new_frame = frame_class(self)
         if self._frame is not None:
@@ -219,13 +219,13 @@ class PageOne(ttk.Frame):
         data = readIn()  # call readIn() function to read data from json file
         axis1_1_minang = data["minangs"][0]
         axis2_1_minang = data["minangs"][1]
-        # Redunent information due to the fact that the second axis has 2 motors
+        # Redundant information due to the fact that the second axis has 2 motors
         axis2_2_minang = data["minangs"][2]
         axis3_1_minang = data["minangs"][3]
         axis4_1_minang = data["minangs"][4]
         axis1_1_maxang = data["maxangs"][0]
         axis2_1_maxang = data["maxangs"][1]
-        # Redunent information due to the fact that the second axis has 2 motors
+        # Redundant information due to the fact that the second axis has 2 motors
         axis2_2_maxang = data["maxangs"][2]
         axis3_1_maxang = data["maxangs"][3]
         axis4_1_maxang = data["maxangs"][4]
@@ -438,7 +438,7 @@ class PageOne(ttk.Frame):
         back.grid(row=7, column=3)
         save.grid(row=7, column=4)
 
-    # Used to update the "settings" that the user has the ablilty to change.
+    # Used to update the "settings" that the user has the ability to change.
     def updateVars(self):
         print("updating called")
         axis1_1_minang = self.axis1_1_minang_var.get()
@@ -482,12 +482,12 @@ class PageTwo(ttk.Frame):
         data = readIn()  # call readIn() function to read data from json file
         self.axis2_1_minang = data["minangs"][1]
         self.axis1_1_minang = data["minangs"][0]
-        # Redunent information due to the fact that the second axis has 2 motors
+        # Redundant information due to the fact that the second axis has 2 motors
         self.axis3_1_minang = data["minangs"][3]
         self.axis4_1_minang = data["minangs"][4]
         self.axis1_1_maxang = data["maxangs"][0]
         self.axis2_1_maxang = data["maxangs"][1]
-        # Redunent information due to the fact that the second axis has 2 motors
+        # Redundant information due to the fact that the second axis has 2 motors
         self.axis3_1_maxang = data["maxangs"][3]
         self.axis4_1_maxang = data["maxangs"][4]
         
@@ -506,7 +506,10 @@ class PageTwo(ttk.Frame):
 
         self.control_loop_active = bool(False)
         
-        # create string variables that can be used to get and set the values of the entry boxes
+        # create tk.DoubleVar() that can be used to get and 
+        # set the values of the entry and spinboxes
+        # These tk.DoubleVar() are used to Construct a float variable. 
+        # They can be changed with a .set() and .get() methods
         (
             self.axis1_1_curval_var,
             self.axis2_1_curval_var,
@@ -532,7 +535,7 @@ class PageTwo(ttk.Frame):
             self.axis4_1_setval_var,
         ]
 
-        # creating Lables for the colunms and label Frame
+        # creating Lables for the columns and label Frame
         self.value_frame = ttk.Frame(self)
         curval_label = ttk.Label(
             self.value_frame, text="Current Position (°)", font=("calibre", 11, "bold")
@@ -670,7 +673,7 @@ class PageTwo(ttk.Frame):
         settings.pack(side="left")
         back.pack(side="left")
 
-        # Create Controls Frame and Place Commponets inside
+        # Create Controls Frame and Place Components inside
         self.gripper_state_text = tk.StringVar()
         self.controls_frame = ttk.Labelframe(self, labelanchor="n")
         controls_label = ttk.Label(
@@ -698,7 +701,7 @@ class PageTwo(ttk.Frame):
             self.controls_frame, text="Zero Axis: ", font=("calibre", 11, "bold")
         )
 
-        # create buttons to zero axis position and place them in a frame whos master is controls_frame
+        # create buttons to zero axis position and place them in a frame whose master is controls_frame
         zero_axis_controls = ttk.Frame(self.controls_frame)
         self.axis1_zero = ttk.Button(
             zero_axis_controls,
@@ -878,7 +881,7 @@ class PageTwo(ttk.Frame):
         '''[self.live_control_state, self.record_state, self.gripper_state, 
         self.play_back_state, self.start_pause_button_state, self.stop_button_state]'''
         
-        self.stop_text = [self.stop_button_text]
+        self.program_controls_text = [self.stop_button_text, self.run_pause_button_text]
         
         start_up_thread = PageTwoStartUp(self.axis_curval_list, self.axis_setval_list)
         start_up_thread.setDaemon(True)
@@ -898,11 +901,11 @@ class PageTwo(ttk.Frame):
             self.stop_button_text.set("Reset E-Stop")
             messagebox.showinfo(
                 "Attention!",
-                "E-Stop pressed on GUI, All moition stopped. "
+                "E-Stop pressed on GUI, All motion stopped. "
                 + "Please attempt to reset position of arm "
                 + "by manually moving axis slowly while powered down "
                 + "and resetting the pi and controllers. "
-                + "OR Another opition is to reset the e-stop to regain control "
+                + "OR Another option is to reset the e-stop to regain control "
                 + "and use a combination of moving the axis using by setting the "
                 + "position and pressing the move arm button. ",
             )
@@ -947,7 +950,7 @@ class PageTwo(ttk.Frame):
     def moveArm(self):
         self.move_arm.configure(state="disable")
         self.control_loop_thread = AsyncControl(
-            self.axis_curval_list, self.axis_setval_list, self.status, self.stop_text
+            self.axis_curval_list, self.axis_setval_list, self.status, self.program_controls_text
         )
         self.control_loop_thread.setDaemon(True)
         self.control_loop_thread.start()
@@ -1000,7 +1003,7 @@ class PageTwo(ttk.Frame):
 
     # change set value definition
     def changeSetVal(self, axis_num, change_val):
-        """Used to as the command to be excuted when the adjustment buttons are used to change the position set value"""
+        """Used to as the command to be executed when the adjustment buttons are used to change the position set value"""
         if 0 < axis_num < 5:
             num = self.axis_setval_list[axis_num-1].get()
             new_num = num + change_val
@@ -1024,7 +1027,7 @@ class PageTwo(ttk.Frame):
                 self.record_cb.configure(state = "enable")
                 self.readonlyChildren(self.value_frame)
                 self.live_axis_control_thread = LiveAxisControl(
-                    self.axis_curval_list, self.axis_setval_list, self.status, self.stop_text
+                    self.axis_curval_list, self.axis_setval_list, self.status, self.program_controls_text
                 )
                 self.live_axis_control_thread.setDaemon(True)
                 self.live_axis_control_thread.start()
@@ -1066,20 +1069,20 @@ class PageTwo(ttk.Frame):
                 # Disable all buttons on the adj_val_buttons_frame
                 self.disableChildren(self.adj_val_buttons_frame)
                 # create new thread  instance to handel motion playback
-                self.play_back_motion_thread = PlayBackMotion(self.axis_curval_list,self.status, self.stop_text)
+                self.play_back_motion_thread = PlayBackMotion(self.axis_curval_list,self.status, self.program_controls_text)
                 self.play_back_motion_thread.setDaemon(True) # use to make it so the thread will shut down after window is closed or main thread is exited
                 self.play_back_motion_thread.start() # Start theard 
-                self.monitiorPlayBackMotion(self.play_back_motion_thread) # called to monitor thread and reset states of buttons when it is done. 
+                self.monitorPlayBackMotion(self.play_back_motion_thread) # called to monitor thread and reset states of buttons when it is done. 
             else:
                 self.play_back_state.set(False) # uncheck the clicked check box
         else:
             self.play_back_state.set(False) # uncheck the clicked check box
 
             
-    def monitiorPlayBackMotion(self, thread=Thread):
+    def monitorPlayBackMotion(self, thread=Thread):
         if thread.is_alive():
             # check the thread every 100ms
-            self.after(100, lambda: self.monitiorPlayBackMotion(thread))
+            self.after(100, lambda: self.monitorPlayBackMotion(thread))
         else:
             # Enable all spinboxs on value_frame
             self.enableChildren(self.value_frame)
@@ -1113,7 +1116,7 @@ class PageTwo(ttk.Frame):
                 
 
     def enableChildren(self, frame: Union[ttk.LabelFrame, ttk.Frame]):
-        """Used to disable the children inputs on the screen. Will renable all children buttons and spinbox
+        """Used to disable the children inputs on the screen. Will reenable all children buttons and spinbox
 
         Args:
             frame (Union[ttk.LabelFrame , ttk.Frame]): _description_
