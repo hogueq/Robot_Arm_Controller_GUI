@@ -376,14 +376,14 @@ staticmethod
 def gripActivate():
     """Function closes the gripper"""
     gripper.min() 
-    time.sleep(1.0) # wait 1 second 
+    time.sleep(1.5) # wait 1.5 second 
 
 
 staticmethod
 def gripDeactivate():
     """Function opens the grippers"""
     gripper.max()
-    time.sleep(1.0) # wait 1 second
+    time.sleep(1.5) # wait 1.5 second
 
 
 staticmethod
@@ -577,6 +577,14 @@ def findImportantControlPoints(commands: "list[dict]"):
     commands.clear()
     n = len(temp_position_list) - 1
     for i in range(0, n):
+        if gripper_state_list[i] != gripper_state_list[i + 1] and i < n:
+            commands.append(
+                {
+                    "AxisNum": temp_axis_num_list[i],
+                    "Position": temp_position_list[i],
+                    "Gripper State": gripper_state_list[i],
+                }
+            )
         if temp_axis_num_list[i] != temp_axis_num_list[i + 1] and i < n - 1:
             commands.append(
                 {
@@ -594,14 +602,14 @@ def findImportantControlPoints(commands: "list[dict]"):
                     }
                 )
                 i+=2
-        # elif gripper_state_list[i] != gripper_state_list[i + 1] and i < n:
-        #     commands.append(
-        #         {
-        #             "AxisNum": temp_axis_num_list[i],
-        #             "Position": temp_position_list[i],
-        #             "Gripper State": gripper_state_list[i],
-        #         }
-        #     )
+                if gripper_state_list[i+1] != gripper_state_list[i + 2] and i < n-1:
+                    commands.append(
+                        {
+                            "AxisNum": temp_axis_num_list[i+1],
+                            "Position": temp_position_list[i+1],
+                            "Gripper State": gripper_state_list[i+1],
+                        }
+                    )
         elif i == 0:
             if temp_position_list[0] != temp_position_list[1]:
                 commands.append(
@@ -648,14 +656,7 @@ def findImportantControlPoints(commands: "list[dict]"):
                     "Gripper State": gripper_state_list[i + 1],
                 }
             )
-        if gripper_state_list[i] != gripper_state_list[i + 1] and i < n-1:
-            commands.append(
-                {
-                    "AxisNum": temp_axis_num_list[i],
-                    "Position": temp_position_list[i],
-                    "Gripper State": gripper_state_list[i],
-                }
-            )
+        
                 
 staticmethod
 def keepActiveWhileMoving(axisNum):
