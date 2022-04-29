@@ -617,9 +617,7 @@ def findImportantControlPoints(commands: "list[dict]"):
                         "Gripper State": gripper_state_list[i],
                     }
                 )
-        elif (
-            0 < i
-            and i < n - 1
+        elif (0 < i and i < n - 1
             and temp_axis_num_list[i - 1]
             == temp_axis_num_list[i]
             == temp_axis_num_list[i + 1]
