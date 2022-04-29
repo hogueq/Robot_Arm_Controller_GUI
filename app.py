@@ -48,16 +48,16 @@ class AsyncControl(Thread):
         axis_curval_list: "list[tk.StringVar]",
         axis_setval_list: "list[tk.StringVar]",
         status: "list[tk.BooleanVar]", 
-        stop_text: "list[tk.StringVar]"
+        program_controls_text: "list[tk.StringVar]"
     ):
         super().__init__()
         self.axis_curval_list = axis_curval_list
         self.axis_setval_list = axis_setval_list
         self.status = status
-        self.stop_text = stop_text
+        self.program_controls_text = program_controls_text
 
     def run(self):
-        RoboticArmFunctions.ctrlLoop(self.axis_curval_list, self.axis_setval_list, self.status, self.stop_text)
+        RoboticArmFunctions.ctrlLoop(self.axis_curval_list, self.axis_setval_list, self.status, self.program_controls_text)
 
 
 
@@ -105,17 +105,17 @@ class LiveAxisControl(Thread):
         axis_curval_list: "list[tk.StringVar]",
         axis_setval_list: "list[tk.StringVar]",
         status: "list[tk.BooleanVar]", 
-        stop_text: "list[tk.StringVar]"
+        program_controls_text: "list[tk.StringVar]"
     ):
         super().__init__()
         self.axis_curval_list = axis_curval_list
         self.axis_setval_list = axis_setval_list
         self.status = status
-        self.stop_text = stop_text
+        self.program_controls_text = program_controls_text
 
     def run(self):
         RoboticArmFunctions.continuousCtrlLoop(
-            self.axis_curval_list, self.axis_setval_list, self.status, self.stop_text
+            self.axis_curval_list, self.axis_setval_list, self.status, self.program_controls_text
         )
         
         
@@ -124,16 +124,16 @@ class PlayBackMotion(Thread):
         self,
         axis_curval_list: "list[tk.DoubleVar]",
         status: "list[tk.BooleanVar]",
-        stop_text: "list[tk.StringVar]"
+        program_controls_text: "list[tk.StringVar]"
     ):
         super().__init__()
         self.axis_curval_list = axis_curval_list
         self.status = status
-        self.stop_text = stop_text
+        self.program_controls_text = program_controls_text
         
     def run(self):
         RoboticArmFunctions.playBackMotion(
-            self.axis_curval_list, 1.0, self.status, self.stop_text
+            self.axis_curval_list, 1.0, self.status, self.program_controls_text
         )
 
 
