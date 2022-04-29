@@ -476,7 +476,7 @@ def playBackMotion(
     # Note: recording the gripper state may have some issues
     findImportantControlPoints(commands)  
     for i in range(0, len(commands)):
-        while not status[4].get():
+        while not status[4].get(): # stays in loop while paused 
             continue
         axis_num = commands[i]["AxisNum"]
         position[axis_num - 1].set(commands[i]["Position"])
@@ -493,8 +493,8 @@ def playBackMotion(
             keepActiveWhileMoving(axis_num)
             if (controllers[axis_num - 1].get_kill_switch_status()
                 or status[5].get() or not status[3].get()):
-                    status[4].set(False)
-                    program_controls_text[1].set("Run")
+                    status[4].set(False) # Sets the run button state back to false 
+                    program_controls_text[1].set("Run") # sets the text back to run
                     if  not status[5].get():
                         status[5].set(True)
                         program_controls_text[0].set("Reset E-Stop")
@@ -506,7 +506,7 @@ def playBackMotion(
                         controllers[3].halt_and_hold()
                         controllers[4].halt_and_hold()
                         
-                        # tell all motors to enter safe start so they dont heat up too much 
+                        # tell all motors to enter safe start so they don't heat up too much 
                         controllers[0].enter_safe_start()
                         controllers[1].enter_safe_start()
                         controllers[2].enter_safe_start()
@@ -670,19 +670,19 @@ def keepActiveWhileMoving(axisNum):
     
     if axisNum == 1:
         try:
-            controllers[axisNum - 1].reset_command_timeout()
+            controllers[axisNum - 1].reset_command_timeout()# makes sure the controller does not time out while moving. 
             
         except:
             print("Error: axis", axisNum, " not responding, please check controller")
         
     elif axisNum == 2:
         try:
-            controllers[axisNum].reset_command_timeout()
-            controllers[axisNum - 1].reset_command_timeout()
+            controllers[axisNum].reset_command_timeout()# makes sure the controller does not time out while moving. 
+            controllers[axisNum - 1].reset_command_timeout()# makes sure the controller does not time out while moving. 
         except:
             print("Error: axis", axisNum, " not responding, please check controller")
     else:
         try:
-            controllers[axisNum].reset_command_timeout()
+            controllers[axisNum].reset_command_timeout()# makes sure the controller does not time out while moving. 
         except:
             print("Error: axis", axisNum, " not responding, please check controller")
