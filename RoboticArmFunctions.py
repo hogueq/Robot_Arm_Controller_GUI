@@ -220,7 +220,9 @@ def ctrlLoop(
     # print('axis control start')
     global controllers
     kill_switch = False
-    status[5].set(False)
+    if status[5].get():
+        program_controls_text[0].set("Reset E-Stop")
+        return
     # go axis by axis to send commands
     for i in range(1,5):
         if not new_positions[i-1].get() == current_positions[i-1].get():
