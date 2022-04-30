@@ -7,11 +7,12 @@ be links to the tutorals that I will provide as a user guide for my GUI. This co
 
 Note: You will find bugs in this code. It is just meant to be a test platform/starting point for future teams. 
 
-Links to tutoral videos:
-  Getting Connected:
-    https://youtu.be/xv71PfhTT0o
-  Using the GUI:
-    https://youtu.be/Grr3m_f9DLQ
+Links to tutorial videos: 
+Getting Connected:
+https://youtu.be/xv71PfhTT0o 
+Using the GUI: 
+https://youtu.be/Grr3m_f9DLQ
+
     
 For Elizabethtown College, PA
   Team 7 - Articulated Robotic Arm 
